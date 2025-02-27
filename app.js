@@ -592,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             // Google Apps Script 웹 앱 URL
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbygh_txu6tzZywbuXQvL7lAzY0rjqNoRfmFo1XdrVoQwCdrmCnOpUFr5mQgKPCTRQJAjg/exec';            
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbxB025GTkO9b_H8fwhXwq1-SOGa6JW8uVnx5Sj4hTD3bWXUOE583iMsHYq0erZVkm3o9g/exec';            
             console.log("데이터 저장 시도 중...", resultData);
             
             // 데이터 전송
