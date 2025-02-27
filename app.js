@@ -282,6 +282,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // 드래그 앤 드롭 관련 변수
         let draggedItem = null;
         let draggedIndex = null;
+        let touchStartY = 0;
+        let currentTouchItem = null;
         
         options.forEach((option, optionIndex) => {
             const rankingItem = document.createElement('div');
@@ -296,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
             itemText.className = 'text';
             itemText.textContent = option;
             
-            // 드래그 이벤트 리스너 추가
+            // 드래그 이벤트 리스너 추가 (데스크톱)
             rankingItem.addEventListener('dragstart', (e) => {
                 draggedItem = rankingItem;
                 draggedIndex = optionIndex;
@@ -331,42 +333,110 @@ document.addEventListener('DOMContentLoaded', function() {
                 rankingItem.classList.remove('drag-over');
                 
                 if (draggedItem !== rankingItem) {
-                    const targetIndex = optionIndex;
-                    
-                    // 순위 변경
-                    const temp = options[draggedIndex];
-                    
-                    if (draggedIndex < targetIndex) {
-                        // 위에서 아래로 드래그
-                        for (let i = draggedIndex; i < targetIndex; i++) {
-                            options[i] = options[i + 1];
-                        }
-                    } else {
-                        // 아래에서 위로 드래그
-                        for (let i = draggedIndex; i > targetIndex; i--) {
-                            options[i] = options[i - 1];
-                        }
-                    }
-                    
-                    options[targetIndex] = temp;
-                    
-                    // 사용자 응답 저장 - 새로운 배열로 복사하여 참조 문제 해결
-                    userAnswers[index] = [...options];
-                    
-                    // UI 갱신 - 이전 순위가 남지 않도록 완전히 새로 그림
-                    questionContainer.innerHTML = '';
-                    const questionText = document.createElement('div');
-                    questionText.className = 'question-text';
-                    questionText.textContent = question.text;
-                    questionContainer.appendChild(questionText);
-                    createRankingQuestion(question, index);
+                    swapItems(draggedIndex, optionIndex);
                 }
             });
+            
+            // 터치 이벤트 리스너 추가 (모바일)
+            rankingItem.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+                currentTouchItem = rankingItem;
+                draggedIndex = optionIndex;
+                rankingItem.classList.add('touch-dragging');
+                e.preventDefault(); // 스크롤 방지
+            }, { passive: false });
+            
+            rankingItem.addEventListener('touchmove', (e) => {
+                if (!currentTouchItem) return;
+                
+                const touchY = e.touches[0].clientY;
+                const deltaY = touchY - touchStartY;
+                
+                // 터치 움직임에 따라 아이템 위치 변경
+                currentTouchItem.style.transform = `translateY(${deltaY}px)`;
+                
+                // 다른 아이템과의 위치 비교
+                const items = rankingContainer.querySelectorAll('.ranking-item');
+                items.forEach((item, idx) => {
+                    if (item !== currentTouchItem) {
+                        const rect = item.getBoundingClientRect();
+                        const itemMiddle = rect.top + rect.height / 2;
+                        
+                        if (touchY > itemMiddle - 10 && touchY < itemMiddle + 10) {
+                            item.classList.add('touch-over');
+                        } else {
+                            item.classList.remove('touch-over');
+                        }
+                    }
+                });
+                
+                e.preventDefault(); // 스크롤 방지
+            }, { passive: false });
+            
+            rankingItem.addEventListener('touchend', (e) => {
+                if (!currentTouchItem) return;
+                
+                currentTouchItem.style.transform = '';
+                currentTouchItem.classList.remove('touch-dragging');
+                
+                // 터치 끝난 위치의 아이템 찾기
+                const touchY = e.changedTouches[0].clientY;
+                const items = rankingContainer.querySelectorAll('.ranking-item');
+                let targetIndex = draggedIndex;
+                
+                items.forEach((item, idx) => {
+                    item.classList.remove('touch-over');
+                    const rect = item.getBoundingClientRect();
+                    
+                    if (touchY >= rect.top && touchY <= rect.bottom && idx !== draggedIndex) {
+                        targetIndex = idx;
+                    }
+                });
+                
+                // 위치가 변경되었으면 아이템 교체
+                if (targetIndex !== draggedIndex) {
+                    swapItems(draggedIndex, targetIndex);
+                }
+                
+                currentTouchItem = null;
+                e.preventDefault(); // 스크롤 방지
+            }, { passive: false });
             
             rankingItem.appendChild(rankCircle);
             rankingItem.appendChild(itemText);
             rankingContainer.appendChild(rankingItem);
         });
+        
+        // 아이템 위치 교체 및 UI 갱신 함수
+        function swapItems(fromIndex, toIndex) {
+            // 순위 변경
+            const temp = options[fromIndex];
+            
+            if (fromIndex < toIndex) {
+                // 위에서 아래로 드래그
+                for (let i = fromIndex; i < toIndex; i++) {
+                    options[i] = options[i + 1];
+                }
+            } else {
+                // 아래에서 위로 드래그
+                for (let i = fromIndex; i > toIndex; i--) {
+                    options[i] = options[i - 1];
+                }
+            }
+            
+            options[toIndex] = temp;
+            
+            // 사용자 응답 저장 - 새로운 배열로 복사하여 참조 문제 해결
+            userAnswers[index] = [...options];
+            
+            // UI 갱신 - 이전 순위가 남지 않도록 완전히 새로 그림
+            questionContainer.innerHTML = '';
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = question.text;
+            questionContainer.appendChild(questionText);
+            createRankingQuestion(question, index);
+        }
         
         questionContainer.appendChild(rankingContainer);
     }
@@ -500,11 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             // Google Apps Script 웹 앱 URL
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbzgvEYX0StXZhDE7394rJ3-AIkrc11BmKGvaltez0d_s20d3YkUMyyVhZMDUOLCs2Jh1Q/exec';
-            
-            // 주의: 위 URL이 401 오류를 반환하는 경우, Google Apps Script 편집기에서 새로운 배포를 만들고
-            // "모든 사용자(익명 포함)" 액세스 권한으로 설정한 후 새 URL로 업데이트해야 합니다.
-            
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbygh_txu6tzZywbuXQvL7lAzY0rjqNoRfmFo1XdrVoQwCdrmCnOpUFr5mQgKPCTRQJAjg/exec';            
             console.log("데이터 저장 시도 중...", resultData);
             
             // 데이터 전송
