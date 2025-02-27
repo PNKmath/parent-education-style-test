@@ -598,14 +598,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // 데이터 전송
             fetch(scriptURL, {
                 method: 'POST',
-                mode: 'no-cors', // CORS 이슈 방지
+                mode: 'cors', // CORS 설정 변경
                 headers: {
-                    'Content-Type': 'text/plain' // JSON 대신 text/plain 사용
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(resultData)
             })
             .then(response => {
-                console.log('결과가 성공적으로 저장되었습니다!');
+                if (response.ok) {
+                    console.log('결과가 성공적으로 저장되었습니다!');
+                } else {
+                    console.warn('서버 응답이 성공적이지 않습니다:', response.status);
+                }
+                
                 // 로컬 스토리지에도 백업으로 저장
                 try {
                     const savedResults = JSON.parse(localStorage.getItem('surveyResults') || '[]');
@@ -621,7 +626,20 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('결과 저장 중 오류 발생:', error);
-                alert('결과 저장 중 오류가 발생했습니다. 나중에 다시 시도해주세요.');
+                
+                // 오류 발생 시에도 로컬 스토리지에 저장 시도
+                try {
+                    const savedResults = JSON.parse(localStorage.getItem('surveyResults') || '[]');
+                    savedResults.push({
+                        ...resultData,
+                        savedAt: new Date().toISOString(),
+                        saveError: true
+                    });
+                    localStorage.setItem('surveyResults', JSON.stringify(savedResults));
+                    console.log('오류 발생했지만 결과가 로컬 스토리지에 저장되었습니다.');
+                } catch (storageError) {
+                    console.warn('로컬 스토리지 저장 실패:', storageError);
+                }
             });
         } catch (error) {
             console.error('saveResultToGoogleSheets 함수 실행 중 오류:', error);
