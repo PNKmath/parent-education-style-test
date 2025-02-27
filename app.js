@@ -284,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let draggedIndex = null;
         let touchStartY = 0;
         let currentTouchItem = null;
+        let touchOffsetY = 0; // 터치 포인트와 아이템 상단의 오프셋
         
         options.forEach((option, optionIndex) => {
             const rankingItem = document.createElement('div');
@@ -339,9 +340,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 터치 이벤트 리스너 추가 (모바일)
             rankingItem.addEventListener('touchstart', (e) => {
-                touchStartY = e.touches[0].clientY;
+                const touch = e.touches[0];
+                touchStartY = touch.clientY;
                 currentTouchItem = rankingItem;
                 draggedIndex = optionIndex;
+                
+                // 터치 포인트와 아이템 상단 사이의 오프셋 계산
+                const itemRect = rankingItem.getBoundingClientRect();
+                touchOffsetY = touch.clientY - itemRect.top;
+                
                 rankingItem.classList.add('touch-dragging');
                 e.preventDefault(); // 스크롤 방지
             }, { passive: false });
@@ -349,20 +356,24 @@ document.addEventListener('DOMContentLoaded', function() {
             rankingItem.addEventListener('touchmove', (e) => {
                 if (!currentTouchItem) return;
                 
-                const touchY = e.touches[0].clientY;
-                const deltaY = touchY - touchStartY;
+                const touch = e.touches[0];
+                const touchY = touch.clientY;
                 
-                // 터치 움직임에 따라 아이템 위치 변경
-                currentTouchItem.style.transform = `translateY(${deltaY}px)`;
+                // 아이템 위치 계산 (터치 포인트 - 오프셋)
+                const itemRect = rankingContainer.getBoundingClientRect();
+                const newTop = touchY - itemRect.top - touchOffsetY;
                 
-                // 다른 아이템과의 위치 비교
+                // 아이템 이동 (손가락 위치에 맞게 조정)
+                currentTouchItem.style.transform = `translateY(${newTop}px)`;
+                
+                // 다른 아이템과의 위치 비교 및 시각적 피드백
                 const items = rankingContainer.querySelectorAll('.ranking-item');
                 items.forEach((item, idx) => {
                     if (item !== currentTouchItem) {
                         const rect = item.getBoundingClientRect();
-                        const itemMiddle = rect.top + rect.height / 2;
                         
-                        if (touchY > itemMiddle - 10 && touchY < itemMiddle + 10) {
+                        // 터치 포인트가 아이템 영역 내에 있는지 확인
+                        if (touchY >= rect.top && touchY <= rect.bottom) {
                             item.classList.add('touch-over');
                         } else {
                             item.classList.remove('touch-over');
