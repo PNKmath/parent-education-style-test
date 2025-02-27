@@ -502,6 +502,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Google Apps Script 웹 앱 URL
             const scriptURL = 'https://script.google.com/macros/s/AKfycbzgvEYX0StXZhDE7394rJ3-AIkrc11BmKGvaltez0d_s20d3YkUMyyVhZMDUOLCs2Jh1Q/exec';
             
+            // 주의: 위 URL이 401 오류를 반환하는 경우, Google Apps Script 편집기에서 새로운 배포를 만들고
+            // "모든 사용자(익명 포함)" 액세스 권한으로 설정한 후 새 URL로 업데이트해야 합니다.
+            
             console.log("데이터 저장 시도 중...", resultData);
             
             // 데이터 전송
