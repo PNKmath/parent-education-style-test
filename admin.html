@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학부모 교육 스타일 테스트 - 관리자 페이지</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Firebase SDK 추가 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="generate-test-data.js"></script>
+    
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .admin-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .admin-table th, .admin-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .admin-table th {
+            background-color: #4d74db;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        .admin-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .admin-table tr:hover {
+            background-color: #e6e6e6;
+        }
+        
+        .export-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .export-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .login-form input {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .login-form button {
+            padding: 10px;
+            background-color: #4d74db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .login-form button:hover {
+            background-color: #3a5bb9;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            margin: 50px 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4d74db;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="admin-header">
+            <h1>관리자 로그인</h1>
+        </div>
+        <form class="login-form" id="loginForm">
+            <input type="password" id="passwordInput" placeholder="비밀번호를 입력하세요" required>
+            <button type="submit">로그인</button>
+        </form>
+    </div>
+    
+    <div class="admin-container hidden" id="adminContainer">
+        <div class="admin-header">
+            <h1>학부모 교육 스타일 테스트 - 관리자 페이지</h1>
+            <p>테스트 결과 데이터를 확인하고 관리할 수 있습니다.</p>
+        </div>
+        
+        <div class="admin-controls">
+            <div>
+                <button class="export-btn" id="exportCSV">CSV로 내보내기</button>
+            </div>
+            <div>
+                <button class="export-btn" id="generateTestData" style="background-color: #ff9800;">테스트 데이터 생성</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loadingContainer">
+            <div class="spinner"></div>
+            <p>데이터를 불러오는 중...</p>
+        </div>
+        
+        <table class="admin-table hidden" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>번호</th>
+                    <th>날짜</th>
+                    <th>결과 유형</th>
+                    <th>RG 점수</th>
+                    <th>IU 점수</th>
+                    <th>SF 점수</th>
+                    <th>DA 점수</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+                <!-- 데이터가 여기에 동적으로 추가됩니다 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        // 관리자 비밀번호 (실제 사용 시 더 안전한 인증 방식으로 변경하세요)
+        const ADMIN_PASSWORD = "admin1234";
+        
+        // DOM 요소
+        const loginContainer = document.getElementById('loginContainer');
+        const adminContainer = document.getElementById('adminContainer');
+        const loginForm = document.getElementById('loginForm');
+        const passwordInput = document.getElementById('passwordInput');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const resultsTable = document.getElementById('resultsTable');
+        const resultsTableBody = document.getElementById('resultsTableBody');
+        const exportCSVBtn = document.getElementById('exportCSV');
+        const generateTestDataBtn = document.getElementById('generateTestData');
+        
+        // 로그인 처리
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = passwordInput.value;
+            
+            if (password === ADMIN_PASSWORD) {
+                loginContainer.classList.add('hidden');
+                adminContainer.classList.remove('hidden');
+                loadData();
+            } else {
+                alert('비밀번호가 올바르지 않습니다.');
+                passwordInput.value = '';
+            }
+        });
+        
+        // Firebase에서 데이터 로드
+        function loadData() {
+            loadingContainer.classList.remove('hidden');
+            resultsTable.classList.add('hidden');
+            
+            const resultsRef = firebase.database().ref('test_results');
+            
+            resultsRef.once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    displayResults(data);
+                    loadingContainer.classList.add('hidden');
+                    resultsTable.classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('데이터 로드 오류:', error);
+                    alert('데이터를 불러오는 중 오류가 발생했습니다.');
+                    loadingContainer.classList.add('hidden');
+                });
+        }
+        
+        // 결과 표시
+        function displayResults(data) {
+            resultsTableBody.innerHTML = '';
+            
+            if (!data) {
+                resultsTableBody.innerHTML = '<tr><td colspan="7">저장된 데이터가 없습니다.</td></tr>';
+                return;
+            }
+            
+            const results = [];
+            
+            // 객체를 배열로 변환
+            Object.keys(data).forEach(key => {
+                results.push({
+                    id: key,
+                    ...data[key]
+                });
+            });
+            
+            // 날짜순으로 정렬 (최신순)
+            results.sort((a, b) => {
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+            
+            // 테이블에 데이터 추가
+            results.forEach((result, index) => {
+                const row = document.createElement('tr');
+                
+                const date = new Date(result.timestamp);
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${formattedDate}</td>
+                    <td>${result.resultTypeCode || '-'}</td>
+                    <td>${result.scores?.RG || 0}</td>
+                    <td>${result.scores?.IU || 0}</td>
+                    <td>${result.scores?.SF || 0}</td>
+                    <td>${result.scores?.DA || 0}</td>
+                `;
+                
+                resultsTableBody.appendChild(row);
+            });
+        }
+        
+        // CSV로 내보내기
+        exportCSVBtn.addEventListener('click', function() {
+            const resultsRef = firebase.database().ref('test_results');
+            
+            resultsRef.once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    
+                    if (!data) {
+                        alert('내보낼 데이터가 없습니다.');
+                        return;
+                    }
+                    
+                    const results = [];
+                    
+                    // 객체를 배열로 변환
+                    Object.keys(data).forEach(key => {
+                        results.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                    
+                    // CSV 헤더
+                    let csv = '번호,날짜,결과 유형,RG 점수,IU 점수,SF 점수,DA 점수\n';
+                    
+                    // CSV 데이터 행 추가
+                    results.forEach((result, index) => {
+                        const date = new Date(result.timestamp);
+                        const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                        
+                        csv += `${index + 1},${formattedDate},${result.resultTypeCode || '-'},${result.scores?.RG || 0},${result.scores?.IU || 0},${result.scores?.SF || 0},${result.scores?.DA || 0}\n`;
+                    });
+                    
+                    // CSV 파일 다운로드
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `학부모_교육_스타일_테스트_결과_${new Date().toISOString().slice(0, 10)}.csv`);
+                    link.style.visibility = 'hidden';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('CSV 내보내기 오류:', error);
+                    alert('CSV 파일을 생성하는 중 오류가 발생했습니다.');
+                });
+        });
+        
+        // 테스트 데이터 생성
+        generateTestDataBtn.addEventListener('click', function() {
+            // generate-test-data.js에 정의된 함수 사용
+            generateTestData(10);
+            
+            // 데이터 로드 (약간의 지연 후)
+            setTimeout(() => {
+                loadData();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

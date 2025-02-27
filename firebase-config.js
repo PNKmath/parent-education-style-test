@@ -1,12 +1,14 @@
 // Firebase 설정
+// 아래 설정 값을 Firebase 콘솔에서 확인한 실제 값으로 대체하세요
+// Firebase 콘솔 > 프로젝트 설정 > 일반 > 내 앱 > Firebase SDK snippet > 구성
 const firebaseConfig = {
-  apiKey: "AIzaSyA_YZ4zHssWbXrk1Jn1-xZ9yrEbW8qJzaI",
+  apiKey: "YOUR_API_KEY",
   authDomain: "parent-education-style-test.firebaseapp.com",
   databaseURL: "https://parent-education-style-test-default-rtdb.firebaseio.com",
   projectId: "parent-education-style-test",
   storageBucket: "parent-education-style-test.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:1234567890abcdef123456"
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 // Firebase 초기화
