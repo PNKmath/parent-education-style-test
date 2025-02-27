@@ -598,18 +598,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // 데이터 전송
             fetch(scriptURL, {
                 method: 'POST',
-                mode: 'cors', // CORS 설정 변경
+                mode: 'no-cors', // CORS 이슈 방지를 위해 다시 no-cors로 변경
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(resultData)
             })
             .then(response => {
-                if (response.ok) {
-                    console.log('결과가 성공적으로 저장되었습니다!');
-                } else {
-                    console.warn('서버 응답이 성공적이지 않습니다:', response.status);
-                }
+                // no-cors 모드에서는 response.ok를 확인할 수 없으므로 항상 성공으로 처리
+                console.log('결과가 전송되었습니다. (no-cors 모드로 인해 실제 성공 여부는 확인할 수 없습니다)');
                 
                 // 로컬 스토리지에도 백업으로 저장
                 try {
