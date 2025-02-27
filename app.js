@@ -489,8 +489,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 결과 계산
             calculateResults();
             
-            // Google Sheets에 결과 저장
-            saveResultToGoogleSheets();
+            // Firebase에 결과 저장
+            saveResultToFirebase();
             
             // 결과 표시
             showResults();
@@ -580,66 +580,29 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // Google Sheets에 결과 저장 함수
-    function saveResultToGoogleSheets() {
+    // 결과를 Firebase에 저장하는 함수
+    function saveResultToFirebase() {
         try {
             // 저장할 데이터 구성
             const resultData = {
                 resultTypeCode: resultTypeCode,
                 scores: scores,
-                userAnswers: userAnswers,
                 timestamp: new Date().toISOString()
             };
             
-            // Google Apps Script 웹 앱 URL
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbxB025GTkO9b_H8fwhXwq1-SOGa6JW8uVnx5Sj4hTD3bWXUOE583iMsHYq0erZVkm3o9g/exec';            
-            console.log("데이터 저장 시도 중...", resultData);
+            // Firebase에 데이터 저장
+            const resultsRef = firebase.database().ref('test_results');
             
-            // 데이터 전송
-            fetch(scriptURL, {
-                method: 'POST',
-                mode: 'no-cors', // CORS 이슈 방지를 위해 다시 no-cors로 변경
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(resultData)
-            })
-            .then(response => {
-                // no-cors 모드에서는 response.ok를 확인할 수 없으므로 항상 성공으로 처리
-                console.log('결과가 전송되었습니다. (no-cors 모드로 인해 실제 성공 여부는 확인할 수 없습니다)');
-                
-                // 로컬 스토리지에도 백업으로 저장
-                try {
-                    const savedResults = JSON.parse(localStorage.getItem('surveyResults') || '[]');
-                    savedResults.push({
-                        ...resultData,
-                        savedAt: new Date().toISOString()
-                    });
-                    localStorage.setItem('surveyResults', JSON.stringify(savedResults));
-                    console.log('결과가 로컬 스토리지에도 저장되었습니다.');
-                } catch (storageError) {
-                    console.warn('로컬 스토리지 저장 실패:', storageError);
-                }
-            })
-            .catch(error => {
-                console.error('결과 저장 중 오류 발생:', error);
-                
-                // 오류 발생 시에도 로컬 스토리지에 저장 시도
-                try {
-                    const savedResults = JSON.parse(localStorage.getItem('surveyResults') || '[]');
-                    savedResults.push({
-                        ...resultData,
-                        savedAt: new Date().toISOString(),
-                        saveError: true
-                    });
-                    localStorage.setItem('surveyResults', JSON.stringify(savedResults));
-                    console.log('오류 발생했지만 결과가 로컬 스토리지에 저장되었습니다.');
-                } catch (storageError) {
-                    console.warn('로컬 스토리지 저장 실패:', storageError);
-                }
-            });
+            // 새 항목 추가 (고유 ID 자동 생성)
+            resultsRef.push(resultData)
+                .then(() => {
+                    console.log('결과가 Firebase에 저장되었습니다.');
+                })
+                .catch(error => {
+                    console.error('Firebase 저장 오류:', error);
+                });
         } catch (error) {
-            console.error('saveResultToGoogleSheets 함수 실행 중 오류:', error);
+            console.error('Firebase 저장 함수 실행 중 오류:', error);
         }
     }
 
