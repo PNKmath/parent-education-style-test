@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let draggedIndex = null;
         let touchStartY = 0;
         let currentTouchItem = null;
-        let touchOffsetY = 0; // 터치 포인트와 아이템 상단의 오프셋
+        let lastTouchY = 0; // 마지막 터치 위치
         
         options.forEach((option, optionIndex) => {
             const rankingItem = document.createElement('div');
@@ -342,12 +342,9 @@ document.addEventListener('DOMContentLoaded', function() {
             rankingItem.addEventListener('touchstart', (e) => {
                 const touch = e.touches[0];
                 touchStartY = touch.clientY;
+                lastTouchY = touchStartY;
                 currentTouchItem = rankingItem;
                 draggedIndex = optionIndex;
-                
-                // 터치 포인트와 아이템 상단 사이의 오프셋 계산
-                const itemRect = rankingItem.getBoundingClientRect();
-                touchOffsetY = touch.clientY - itemRect.top;
                 
                 rankingItem.classList.add('touch-dragging');
                 e.preventDefault(); // 스크롤 방지
@@ -359,12 +356,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const touch = e.touches[0];
                 const touchY = touch.clientY;
                 
-                // 아이템 위치 계산 (터치 포인트 - 오프셋)
-                const itemRect = rankingContainer.getBoundingClientRect();
-                const newTop = touchY - itemRect.top - touchOffsetY;
+                // 이전 터치 위치와의 상대적 이동량 계산
+                const deltaY = touchY - lastTouchY;
+                lastTouchY = touchY;
                 
-                // 아이템 이동 (손가락 위치에 맞게 조정)
-                currentTouchItem.style.transform = `translateY(${newTop}px)`;
+                // 현재 transform 값 가져오기
+                const currentTransform = currentTouchItem.style.transform;
+                let currentY = 0;
+                
+                if (currentTransform) {
+                    const match = currentTransform.match(/translateY\(([^)]+)\)/);
+                    if (match && match[1]) {
+                        currentY = parseFloat(match[1]);
+                    }
+                }
+                
+                // 새로운 위치 계산 (상대적 이동)
+                const newY = currentY + deltaY;
+                
+                // 아이템 이동
+                currentTouchItem.style.transform = `translateY(${newY}px)`;
                 
                 // 다른 아이템과의 위치 비교 및 시각적 피드백
                 const items = rankingContainer.querySelectorAll('.ranking-item');
