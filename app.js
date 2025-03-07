@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
     const resultContainer = document.getElementById('result-container');
+    const animalMottoSection = document.getElementById('animal-motto-section');
     const resultTitle = document.getElementById('result-type');
     const resultDescription = document.getElementById('result-description');
     const resultDetail = document.getElementById('result-detail');
@@ -271,194 +272,127 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 사용자가 이미 순위를 매겼는지 확인
         let options = [...question.options];
+        let selectedOrder = [];
+        
         if (userAnswers[index] && Array.isArray(userAnswers[index])) {
-            options = [...userAnswers[index]];
+            // 이미 응답이 있는 경우
+            selectedOrder = userAnswers[index].map(item => options.indexOf(item));
         } else {
-            // 초기 응답 설정 - 사용자가 순서를 바꾸지 않아도 다음으로 넘어갈 수 있도록
-            userAnswers[index] = [...options];
-            nextBtn.disabled = false;
+            // 초기 응답 설정 - 아무것도 선택되지 않은 상태
+            userAnswers[index] = [];
         }
         
-        // 드래그 앤 드롭 관련 변수
-        let draggedItem = null;
-        let draggedIndex = null;
-        let touchStartY = 0;
-        let currentTouchItem = null;
-        let lastTouchY = 0; // 마지막 터치 위치
+        // 선택 상태 추적 변수
+        let currentRank = selectedOrder.length + 1;
+        
+        // 안내 메시지 추가
+        const instructionText = document.createElement('p');
+        instructionText.className = 'ranking-instruction';
+        instructionText.textContent = '항목을 클릭하여 중요도 순서대로 선택해주세요.';
+        rankingContainer.appendChild(instructionText);
         
         options.forEach((option, optionIndex) => {
             const rankingItem = document.createElement('div');
-            rankingItem.className = 'ranking-item';
-            rankingItem.draggable = true;
+            rankingItem.className = 'ranking-item selectable';
             
-            const rankCircle = document.createElement('div');
-            rankCircle.className = 'rank';
-            rankCircle.textContent = optionIndex + 1;
+            // 이미 선택된 항목인지 확인
+            const selectedIndex = selectedOrder.indexOf(optionIndex);
+            let rankCircle = null;
+            
+            if (selectedIndex !== -1) {
+                // 이미 선택된 항목
+                rankingItem.classList.add('selected');
+                rankCircle = document.createElement('div');
+                rankCircle.className = 'rank';
+                rankCircle.textContent = selectedIndex + 1;
+                rankingItem.appendChild(rankCircle);
+            }
             
             const itemText = document.createElement('div');
             itemText.className = 'text';
             itemText.textContent = option;
-            
-            // 드래그 이벤트 리스너 추가 (데스크톱)
-            rankingItem.addEventListener('dragstart', (e) => {
-                draggedItem = rankingItem;
-                draggedIndex = optionIndex;
-                setTimeout(() => {
-                    rankingItem.classList.add('dragging');
-                }, 0);
-            });
-            
-            rankingItem.addEventListener('dragend', () => {
-                rankingItem.classList.remove('dragging');
-                draggedItem = null;
-                draggedIndex = null;
-            });
-            
-            rankingItem.addEventListener('dragover', (e) => {
-                e.preventDefault();
-            });
-            
-            rankingItem.addEventListener('dragenter', (e) => {
-                e.preventDefault();
-                if (draggedItem !== rankingItem) {
-                    rankingItem.classList.add('drag-over');
-                }
-            });
-            
-            rankingItem.addEventListener('dragleave', () => {
-                rankingItem.classList.remove('drag-over');
-            });
-            
-            rankingItem.addEventListener('drop', (e) => {
-                e.preventDefault();
-                rankingItem.classList.remove('drag-over');
-                
-                if (draggedItem !== rankingItem) {
-                    swapItems(draggedIndex, optionIndex);
-                }
-            });
-            
-            // 터치 이벤트 리스너 추가 (모바일)
-            rankingItem.addEventListener('touchstart', (e) => {
-                const touch = e.touches[0];
-                touchStartY = touch.clientY;
-                lastTouchY = touchStartY;
-                currentTouchItem = rankingItem;
-                draggedIndex = optionIndex;
-                
-                rankingItem.classList.add('touch-dragging');
-                e.preventDefault(); // 스크롤 방지
-            }, { passive: false });
-            
-            rankingItem.addEventListener('touchmove', (e) => {
-                if (!currentTouchItem) return;
-                
-                const touch = e.touches[0];
-                const touchY = touch.clientY;
-                
-                // 이전 터치 위치와의 상대적 이동량 계산
-                const deltaY = touchY - lastTouchY;
-                lastTouchY = touchY;
-                
-                // 현재 transform 값 가져오기
-                const currentTransform = currentTouchItem.style.transform;
-                let currentY = 0;
-                
-                if (currentTransform) {
-                    const match = currentTransform.match(/translateY\(([^)]+)\)/);
-                    if (match && match[1]) {
-                        currentY = parseFloat(match[1]);
-                    }
-                }
-                
-                // 새로운 위치 계산 (상대적 이동)
-                const newY = currentY + deltaY;
-                
-                // 아이템 이동
-                currentTouchItem.style.transform = `translateY(${newY}px)`;
-                
-                // 다른 아이템과의 위치 비교 및 시각적 피드백
-                const items = rankingContainer.querySelectorAll('.ranking-item');
-                items.forEach((item, idx) => {
-                    if (item !== currentTouchItem) {
-                        const rect = item.getBoundingClientRect();
-                        
-                        // 터치 포인트가 아이템 영역 내에 있는지 확인
-                        if (touchY >= rect.top && touchY <= rect.bottom) {
-                            item.classList.add('touch-over');
-                        } else {
-                            item.classList.remove('touch-over');
-                        }
-                    }
-                });
-                
-                e.preventDefault(); // 스크롤 방지
-            }, { passive: false });
-            
-            rankingItem.addEventListener('touchend', (e) => {
-                if (!currentTouchItem) return;
-                
-                currentTouchItem.style.transform = '';
-                currentTouchItem.classList.remove('touch-dragging');
-                
-                // 터치 끝난 위치의 아이템 찾기
-                const touchY = e.changedTouches[0].clientY;
-                const items = rankingContainer.querySelectorAll('.ranking-item');
-                let targetIndex = draggedIndex;
-                
-                items.forEach((item, idx) => {
-                    item.classList.remove('touch-over');
-                    const rect = item.getBoundingClientRect();
-                    
-                    if (touchY >= rect.top && touchY <= rect.bottom && idx !== draggedIndex) {
-                        targetIndex = idx;
-                    }
-                });
-                
-                // 위치가 변경되었으면 아이템 교체
-                if (targetIndex !== draggedIndex) {
-                    swapItems(draggedIndex, targetIndex);
-                }
-                
-                currentTouchItem = null;
-                e.preventDefault(); // 스크롤 방지
-            }, { passive: false });
-            
-            rankingItem.appendChild(rankCircle);
             rankingItem.appendChild(itemText);
+            
+            // 클릭 이벤트 리스너 추가
+            rankingItem.addEventListener('click', () => {
+                if (rankingItem.classList.contains('selected')) {
+                    // 이미 선택된 항목 클릭 시 선택 취소
+                    const rankToRemove = parseInt(rankingItem.querySelector('.rank').textContent);
+                    
+                    // 선택 취소
+                    rankingItem.classList.remove('selected');
+                    rankingItem.removeChild(rankingItem.querySelector('.rank'));
+                    
+                    // 선택 순서에서 제거
+                    const indexToRemove = selectedOrder.indexOf(optionIndex);
+                    if (indexToRemove !== -1) {
+                        selectedOrder.splice(indexToRemove, 1);
+                    }
+                    
+                    // 후속 순위 재조정
+                    const items = rankingContainer.querySelectorAll('.ranking-item.selected');
+                    items.forEach(item => {
+                        const rankElement = item.querySelector('.rank');
+                        const currentRankNum = parseInt(rankElement.textContent);
+                        if (currentRankNum > rankToRemove) {
+                            rankElement.textContent = currentRankNum - 1;
+                        }
+                    });
+                    
+                    // 현재 순위 업데이트
+                    currentRank = selectedOrder.length + 1;
+                } else {
+                    // 새로 선택된 항목
+                    if (currentRank <= options.length) {
+                        // 순위 표시 추가
+                        rankCircle = document.createElement('div');
+                        rankCircle.className = 'rank';
+                        rankCircle.textContent = currentRank;
+                        rankingItem.insertBefore(rankCircle, itemText);
+                        
+                        // 선택 상태로 변경
+                        rankingItem.classList.add('selected');
+                        
+                        // 선택 순서에 추가
+                        selectedOrder.push(optionIndex);
+                        
+                        // 현재 순위 증가
+                        currentRank++;
+                    }
+                }
+                
+                // 사용자 응답 업데이트
+                userAnswers[index] = selectedOrder.map(idx => options[idx]);
+                
+                // 다음 버튼 활성화 여부 결정 - 모든 항목의 순위가 지정되어야 활성화
+                nextBtn.disabled = selectedOrder.length !== options.length;
+                
+                // 진행 상태 표시 업데이트
+                updateInstructionText();
+            });
+            
             rankingContainer.appendChild(rankingItem);
         });
         
-        // 아이템 위치 교체 및 UI 갱신 함수
-        function swapItems(fromIndex, toIndex) {
-            // 순위 변경
-            const temp = options[fromIndex];
-            
-            if (fromIndex < toIndex) {
-                // 위에서 아래로 드래그
-                for (let i = fromIndex; i < toIndex; i++) {
-                    options[i] = options[i + 1];
-                }
+        // 진행 상태 안내 메시지 업데이트 함수
+        function updateInstructionText() {
+            if (selectedOrder.length === 0) {
+                instructionText.textContent = '항목을 클릭하여 중요도 순서대로 선택해주세요.';
+                instructionText.classList.remove('complete');
+            } else if (selectedOrder.length < options.length) {
+                instructionText.textContent = `${selectedOrder.length}/${options.length} 항목 선택됨. 나머지 항목도 선택해주세요.`;
+                instructionText.classList.remove('complete');
             } else {
-                // 아래에서 위로 드래그
-                for (let i = fromIndex; i > toIndex; i--) {
-                    options[i] = options[i - 1];
-                }
+                instructionText.textContent = '모든 항목의 순위가 지정되었습니다. 순서를 변경하려면 항목을 다시 클릭하세요.';
+                instructionText.classList.add('complete');
             }
-            
-            options[toIndex] = temp;
-            
-            // 사용자 응답 저장 - 새로운 배열로 복사하여 참조 문제 해결
-            userAnswers[index] = [...options];
-            
-            // UI 갱신 - 이전 순위가 남지 않도록 완전히 새로 그림
-            questionContainer.innerHTML = '';
-            const questionText = document.createElement('div');
-            questionText.className = 'question-text';
-            questionText.textContent = question.text;
-            questionContainer.appendChild(questionText);
-            createRankingQuestion(question, index);
         }
+        
+        // 초기 안내 메시지 설정
+        updateInstructionText();
+        
+        // 초기 다음 버튼 상태 설정
+        nextBtn.disabled = selectedOrder.length !== options.length;
         
         questionContainer.appendChild(rankingContainer);
     }
@@ -488,9 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             // 결과 계산
             calculateResults();
-            
-            // Firebase에 결과 저장
-            saveResultToFirebase();
             
             // 결과 표시
             showResults();
@@ -559,6 +490,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // 결과 유형 정보 가져오기
         const result = results[resultTypeCode];
         
+        // 동물 비유와 모토 표시
+        animalMottoSection.innerHTML = `
+            <div class="animal-motto-container">
+                <div class="animal-type">
+                    <h3>🦅 당신은</h3>
+                    <p class="highlight-text">"${result.animal}"</p>
+                </div>
+                <div class="motto-type">
+                    <h3>💫 당신의 모토</h3>
+                    <p class="highlight-text">"${result.motto || (result.details.모토 ? result.details.모토 : '')}"</p>
+                </div>
+            </div>
+        `;
+        
         // 결과 내용 생성
         resultTitle.textContent = `${result.emoji} ${result.title}`;
         
@@ -575,35 +520,19 @@ document.addEventListener('DOMContentLoaded', function() {
             <ul>
                 ${result.details.스타일.map(item => `<li>${item}</li>`).join('')}
             </ul>
-            <h3>💫 당신의 모토</h3>
-            <p><strong>"${result.details.모토}"</strong></p>
+            <h3>👍 장점</h3>
+            <ul>
+                ${result.details.장점 ? result.details.장점.map(item => `<li>${item}</li>`).join('') : ''}
+            </ul>
+            <h3>⚠️ 주의할 점</h3>
+            <ul>
+                ${result.details.단점 ? result.details.단점.map(item => `<li>${item}</li>`).join('') : ''}
+            </ul>
+            <h3>💡 실천 가이드</h3>
+            <ul>
+                ${result.details.실천가이드 ? result.details.실천가이드.map(item => `<li>${item}</li>`).join('') : ''}
+            </ul>
         `;
-    }
-
-    // 결과를 Firebase에 저장하는 함수
-    function saveResultToFirebase() {
-        try {
-            // 저장할 데이터 구성
-            const resultData = {
-                resultTypeCode: resultTypeCode,
-                scores: scores,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Firebase에 데이터 저장
-            const resultsRef = firebase.database().ref('test_results');
-            
-            // 새 항목 추가 (고유 ID 자동 생성)
-            resultsRef.push(resultData)
-                .then(() => {
-                    console.log('결과가 Firebase에 저장되었습니다.');
-                })
-                .catch(error => {
-                    console.error('Firebase 저장 오류:', error);
-                });
-        } catch (error) {
-            console.error('Firebase 저장 함수 실행 중 오류:', error);
-        }
     }
 
     // 로딩 화면 표시 함수
@@ -743,6 +672,10 @@ document.addEventListener('DOMContentLoaded', function() {
 📊 나의 학부모 교육 스타일 테스트 결과 📊
 
 ✨ 나는 "${resultInfo.title}" 타입의 학부모래요! ${resultInfo.emoji}
+🦅 "${resultInfo.animal}"
+
+💫 나의 모토:
+"${resultInfo.motto || (resultInfo.details.모토 ? resultInfo.details.모토 : '')}"
 
 📝 특징:
 ${resultInfo.details.특징.map(item => `• ${item}`).join('\n')}
@@ -750,8 +683,11 @@ ${resultInfo.details.특징.map(item => `• ${item}`).join('\n')}
 🎯 교육 스타일:
 ${resultInfo.details.스타일.map(item => `• ${item}`).join('\n')}
 
-💫 나의 모토:
-"${resultInfo.details.모토}"
+👍 장점:
+${resultInfo.details.장점 ? resultInfo.details.장점.map(item => `• ${item}`).join('\n') : ''}
+
+💡 실천 가이드:
+${resultInfo.details.실천가이드 ? resultInfo.details.실천가이드.map(item => `• ${item}`).join('\n') : ''}
 
 ${resultInfo.description}
 

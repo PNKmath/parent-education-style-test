@@ -401,54 +401,49 @@ h1 {
     width: 100%;
 }
 
+.ranking-instruction {
+    text-align: center;
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.ranking-instruction.complete {
+    background-color: #e8f4ff;
+    color: #4d74db;
+    font-weight: 500;
+}
+
 .ranking-item {
     display: flex;
     align-items: center;
     padding: 15px;
     background-color: #f9f9f9;
     border-radius: 8px;
-    cursor: grab;
-    transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
     position: relative;
-    z-index: 1;
-    touch-action: none; /* 모바일에서 스크롤 방지 */
-    user-select: none; /* 텍스트 선택 방지 */
-    -webkit-user-select: none;
-    -webkit-touch-callout: none; /* iOS에서 길게 누르기 메뉴 방지 */
     margin-bottom: 5px;
     border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
 }
 
-.ranking-item:active {
-    cursor: grabbing;
+.ranking-item.selectable {
+    cursor: pointer;
+}
+
+.ranking-item.selectable:hover {
     background-color: #f0f0f0;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
-.ranking-item.dragging {
-    opacity: 0.7;
-    background-color: #e0e0e0;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.ranking-item.drag-over {
-    border: 2px dashed #007bff;
-    padding: 14px; /* 테두리가 2px로 증가했으므로 패딩 1px 감소 */
-}
-
-.ranking-item.touch-dragging {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-    background-color: #e8f0fe;
-    opacity: 0.9;
-    border-color: #007bff;
-}
-
-.ranking-item.touch-over {
-    border: 2px dashed #007bff;
-    padding: 14px; /* 테두리가 2px로 증가했으므로 패딩 1px 감소 */
-    background-color: #f0f7ff;
-    transform: scale(1.02);
-    transition: transform 0.15s ease, background-color 0.15s ease;
+.ranking-item.selected {
+    background-color: #e8f4ff;
+    border-color: #4d74db;
+    box-shadow: 0 3px 10px rgba(77, 116, 219, 0.1);
 }
 
 .rank {
@@ -457,11 +452,28 @@ h1 {
     align-items: center;
     width: 30px;
     height: 30px;
-    background-color: #007bff;
+    background-color: #4d74db;
     color: white;
     border-radius: 50%;
     margin-right: 15px;
     font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.ranking-item.selected .rank {
+    animation: pulse 1s ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 .ranking-item .text {
@@ -480,21 +492,17 @@ h1 {
 }
 
 .result-type {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #4d74db;
+    font-size: 2rem;
+    font-weight: 700;
     margin: 20px 0;
-    padding: 15px;
-    border: 2px solid #4d74db;
-    border-radius: 10px;
-    display: inline-block;
+    color: #4d74db;
 }
 
 .result-description {
-    margin: 25px 0;
     font-size: 1.1rem;
-    line-height: 1.7;
-    text-align: left;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #4a5568;
 }
 
 .result-detail {
@@ -525,6 +533,23 @@ footer {
     padding: 20px;
     color: #718096;
     font-size: 0.9rem;
+}
+
+/* 개인정보 수집 동의 스타일 */
+.privacy-consent {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.consent-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 0;
+    line-height: 1.4;
 }
 
 /* 유틸리티 클래스 */
@@ -604,8 +629,60 @@ footer {
 
 /* 모바일 최적화 */
 @media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
     h1 {
         font-size: 1.8rem;
+    }
+    
+    .intro-section {
+        flex-direction: column;
+    }
+    
+    .intro-image, .intro-text {
+        width: 100%;
+    }
+    
+    .likert-scale {
+        flex-direction: column;
+    }
+    
+    .likert-option {
+        margin: 5px 0;
+    }
+    
+    .option-cards {
+        flex-direction: column;
+    }
+    
+    .option-card {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .ox-options {
+        gap: 15px;
+    }
+    
+    .ox-circle {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .ranking-container {
+        width: 100%;
+    }
+    
+    .animal-motto-container {
+        flex-direction: column;
+    }
+    
+    .animal-type, .motto-type {
+        width: 100%;
+        margin-bottom: 15px;
     }
     
     .subtitle {
@@ -620,10 +697,33 @@ footer {
         font-size: 1.1rem;
     }
     
-    .ox-circle {
-        width: 70px;
-        height: 70px;
-        font-size: 1.8rem;
+    .result-type {
+        font-size: 1.5rem;
+        padding: 12px;
+    }
+    
+    .ranking-item {
+        padding: 12px;
+    }
+    
+    .ranking-item.selectable:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .ranking-item.selectable:active {
+        background-color: #f0f0f0;
+    }
+    
+    .rank {
+        width: 25px;
+        height: 25px;
+        font-size: 0.9rem;
+        margin-right: 10px;
+    }
+    
+    .ranking-item .text {
+        font-size: 0.95rem;
     }
     
     .button-group {
@@ -634,23 +734,46 @@ footer {
     .button-group button {
         width: 100%;
     }
-    
-    .result-type {
-        font-size: 1.5rem;
-        padding: 12px;
-    }
-    
-    .ranking-item {
-        padding: 12px;
-    }
-    
-    .ranking-item .rank {
-        width: 25px;
-        height: 25px;
-        margin-right: 10px;
-    }
-    
-    .ranking-item .text {
-        font-size: 0.95rem;
-    }
+}
+
+/* 동물 유형과 모토 스타일 */
+.animal-motto-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 0;
+    gap: 20px;
+}
+
+.animal-type, .motto-type {
+    flex: 1;
+    min-width: 250px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.highlight-text {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #4d74db;
+    margin: 10px 0;
+}
+
+/* 결과 스타일 */
+.animal-motto-section {
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f0f7ff;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.result-type {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 20px 0;
+    color: #4d74db;
 }
