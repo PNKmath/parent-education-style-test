@@ -418,17 +418,22 @@ document.addEventListener('DOMContentLoaded', function() {
         // 로딩 화면 표시
         showLoadingScreen();
         
-        // 결과 계산 및 표시는 로딩 애니메이션 후에 실행
+        // 결과 계산 (비동기 처리를 위해 setTimeout 사용)
         setTimeout(() => {
-            // 결과 계산
             calculateResults();
             
-            // 결과 표시
-            showResults();
+            // 결과 유형 결정
+            resultTypeCode = determineResultType(scores);
             
-            // 로딩 화면 숨기기
-            hideLoadingScreen();
-        }, 3000); // 3초 후 결과 표시
+            // 결과 이미지 프리로딩
+            preloadResultImage(resultTypeCode);
+            
+            // 로딩 화면 숨기기 및 결과 표시 (추가 지연 적용)
+            setTimeout(() => {
+                hideLoadingScreen();
+                showResults();
+            }, 1000); // 1초 추가 지연
+        }, 1500); // 1.5초 지연
     }
 
     // 결과 계산 함수
@@ -462,9 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 scores[dimension] += score;
             }
         });
-        
-        // 결과 유형 결정
-        resultTypeCode = determineResultType(scores);
     }
     
     // 결과 유형 결정 함수
@@ -479,7 +481,30 @@ document.addEventListener('DOMContentLoaded', function() {
         return r_vs_g + i_vs_u + s_vs_f + d_vs_a;
     }
 
-    // 결과 표시 함수
+    // 결과 이미지 파일명 매핑 함수
+    function getResultImageFilename(typeCode) {
+        const imageMap = {
+            'RISD': '독수리형 학부모(RISD).webp',
+            'RISA': '매형 학부모(RISA).webp',
+            'RIFD': '여우형 학부모(RIFD).webp',
+            'RIFA': '고양이형 학부모(RIFA).webp',
+            'RUSD': '부엉이형 학부모(RUSD).webp',
+            'RUSA': '독립적인 늑대형 학부모(RUSA).webp',
+            'RUFD': '카멜레온형 학부모(RUFD).webp',
+            'RUFA': '돌고래형 학부모(RUFA).webp',
+            'GISD': '코끼리형 학부모(GISD).webp',
+            'GISA': '기린형 학부모(GISA).webp',
+            'GIFD': '나무늘보형 학부모(GIFD).webp', // 이 파일이 목록에 없어 추가 필요
+            'GIFA': '반딧불이형 학부모(GIFA).webp',
+            'GUSD': '거북이형 학부모(GUSD).webp',
+            'GUSA': '나비형 학부모(GUSA).webp',
+            'GUFD': '해파리형 학부모(GUFD).webp',
+            'GUFA': '제비형 학부모(GUFA).webp'
+        };
+        
+        return imageMap[typeCode] || 'default.webp';
+    }
+
     function showResults() {
         // 테스트 컨테이너 숨기기
         testContainer.style.display = 'none';
@@ -490,10 +515,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // 결과 유형 정보 가져오기
         const result = results[resultTypeCode];
         
+        // 결과 이미지 파일명 가져오기
+        const imageFilename = getResultImageFilename(resultTypeCode);
+        
         // 동물 비유와 모토 표시
         animalMottoSection.innerHTML = `
             <div class="animal-motto-container">
                 <div class="animal-type">
+                    <div class="animal-image">
+                        <img src="images/animals/${imageFilename}" alt="${result.animal}" onerror="this.src='images/animals/default.webp'">
+                    </div>
                     <h3>🦅 당신은</h3>
                     <p class="highlight-text">"${result.animal}"</p>
                     <p class="animal-reason">${result.animal_reason}</p>
@@ -706,6 +737,13 @@ ${currentUrl}
             alert('결과 복사에 실패했습니다. 직접 선택해서 복사해주세요!');
             console.error('클립보드 복사 실패:', err);
         });
+    }
+
+    // 결과 이미지 프리로딩 함수
+    function preloadResultImage(typeCode) {
+        const img = new Image();
+        const imageFilename = getResultImageFilename(typeCode);
+        img.src = `images/animals/${imageFilename}`;
     }
 });
 

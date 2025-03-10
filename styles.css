@@ -650,7 +650,7 @@ footer {
     }
     
     .likert-option {
-        margin: 5px 0;
+        width: 100%;
     }
     
     .option-cards {
@@ -659,21 +659,21 @@ footer {
     
     .option-card {
         width: 100%;
-        margin: 5px 0;
+        margin-bottom: 10px;
     }
     
     .ox-options {
-        gap: 15px;
+        flex-direction: column;
     }
     
     .ox-circle {
         width: 60px;
         height: 60px;
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
     
     .ranking-container {
-        width: 100%;
+        padding: 10px;
     }
     
     .animal-motto-container {
@@ -682,7 +682,11 @@ footer {
     
     .animal-type, .motto-type {
         width: 100%;
-        margin-bottom: 15px;
+    }
+    
+    .animal-image {
+        width: 120px;
+        height: 120px;
     }
     
     .subtitle {
@@ -690,7 +694,7 @@ footer {
     }
     
     .intro-text h2 {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
     }
     
     .question-text {
@@ -699,20 +703,18 @@ footer {
     
     .result-type {
         font-size: 1.5rem;
-        padding: 12px;
     }
     
     .ranking-item {
-        padding: 12px;
+        padding: 8px;
     }
     
     .ranking-item.selectable:hover {
-        transform: none;
-        box-shadow: none;
+        transform: translateY(-2px);
     }
     
     .ranking-item.selectable:active {
-        background-color: #f0f0f0;
+        transform: translateY(0);
     }
     
     .rank {
@@ -753,6 +755,32 @@ footer {
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.animal-image {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.animal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.animal-image img:hover {
+    transform: scale(1.05);
 }
 
 .highlight-text {
