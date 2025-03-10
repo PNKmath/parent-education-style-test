@@ -490,49 +490,94 @@ document.addEventListener('DOMContentLoaded', function() {
         // 결과 유형 정보 가져오기
         const result = results[resultTypeCode];
         
+        // 결과가 없는 경우 처리
+        if (!result) {
+            console.error('Result not found for type:', resultTypeCode);
+            animalMottoSection.innerHTML = '';
+            resultTitle.textContent = '결과를 불러올 수 없습니다';
+            resultDescription.textContent = '죄송합니다. 결과를 불러오는 중 오류가 발생했습니다.';
+            resultDetail.innerHTML = '';
+            return;
+        }
+        
         // 동물 비유와 모토 표시
         animalMottoSection.innerHTML = `
             <div class="animal-motto-container">
                 <div class="animal-type">
                     <h3>🦅 당신은</h3>
-                    <p class="highlight-text">"${result.animal}"</p>
+                    <p class="highlight-text">"${result.animal || '학부모 타입'}"</p>
                 </div>
                 <div class="motto-type">
                     <h3>💫 당신의 모토</h3>
-                    <p class="highlight-text">"${result.motto || (result.details.모토 ? result.details.모토 : '')}"</p>
+                    <p class="highlight-text">"${result.motto || (result.details && result.details.모토 ? result.details.모토 : '당신만의 교육 모토')}"</p>
                 </div>
             </div>
         `;
         
         // 결과 내용 생성
-        resultTitle.textContent = `${result.emoji} ${result.title}`;
+        resultTitle.textContent = `${result.emoji || '✨'} ${result.title || resultTypeCode}`;
         
         // 결과 설명 표시
-        resultDescription.textContent = result.description;
+        resultDescription.textContent = result.description || '당신만의 독특한 교육 스타일을 가지고 있습니다.';
         
         // 결과 상세 정보 표시
-        resultDetail.innerHTML = `
-            <h3>✨ 당신의 특징</h3>
-            <ul>
-                ${result.details.특징.map(item => `<li>${item}</li>`).join('')}
-            </ul>
-            <h3>🎯 교육 스타일</h3>
-            <ul>
-                ${result.details.스타일.map(item => `<li>${item}</li>`).join('')}
-            </ul>
-            <h3>👍 장점</h3>
-            <ul>
-                ${result.details.장점 ? result.details.장점.map(item => `<li>${item}</li>`).join('') : ''}
-            </ul>
-            <h3>⚠️ 주의할 점</h3>
-            <ul>
-                ${result.details.단점 ? result.details.단점.map(item => `<li>${item}</li>`).join('') : ''}
-            </ul>
-            <h3>💡 실천 가이드</h3>
-            <ul>
-                ${result.details.실천가이드 ? result.details.실천가이드.map(item => `<li>${item}</li>`).join('') : ''}
-            </ul>
-        `;
+        let detailHTML = '';
+        
+        // 특징 섹션
+        if (result.details && result.details.특징 && result.details.특징.length > 0) {
+            detailHTML += `
+                <h3>✨ 당신의 특징</h3>
+                <ul>
+                    ${result.details.특징.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        // 교육 스타일 섹션
+        if (result.details && result.details.스타일 && result.details.스타일.length > 0) {
+            detailHTML += `
+                <h3>🎯 교육 스타일</h3>
+                <ul>
+                    ${result.details.스타일.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        // 장점 섹션
+        if (result.details && result.details.장점 && result.details.장점.length > 0) {
+            detailHTML += `
+                <h3>👍 장점</h3>
+                <ul>
+                    ${result.details.장점.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        // 주의할 점 섹션
+        if (result.details && result.details.단점 && result.details.단점.length > 0) {
+            detailHTML += `
+                <h3>⚠️ 주의할 점</h3>
+                <ul>
+                    ${result.details.단점.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        // 실천 가이드 섹션
+        if (result.details && result.details.실천가이드 && result.details.실천가이드.length > 0) {
+            detailHTML += `
+                <h3>💡 실천 가이드</h3>
+                <ul>
+                    ${result.details.실천가이드.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            `;
+        }
+        
+        resultDetail.innerHTML = detailHTML;
+        
+        // 디버깅 정보 콘솔에 출력
+        console.log('Result Type:', resultTypeCode);
+        console.log('Result Data:', result);
     }
 
     // 로딩 화면 표시 함수
